@@ -13,7 +13,7 @@ public class MathControl : MonoBehaviour
     public Boolean start_new_game = true;
     public Button[] buttons = new Button[12];
     public string operation;
-    private static int MAXLIM = 200;
+    private static int MAXLIM = 100;
 
     public Text targetValueTxt;
     private int targetValueNum;
@@ -22,10 +22,18 @@ public class MathControl : MonoBehaviour
     private int clickedValue1, clickedValue2;
 
     private int clicksNum = 0;
+    float timeLeft = 31.0f;
+    public Text timeLeftText;
+    private float pts;
+    public Text ptsText;
 
     // Start is called before the first frame update
     void Start()
     {
+        if (PlayerPrefs.HasKey("pts")) {
+            pts = PlayerPrefs.GetFloat("pts");
+            ptsText.text = pts.ToString();
+        }
         operation = PlayerPrefs.GetString("operation");
         Button button;
 
@@ -42,6 +50,13 @@ public class MathControl : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        timeLeft -= Time.deltaTime;
+        if (timeLeft <= 0) {
+            timeLeft = 31.0f;
+            start_new_game = true;
+        }
+        timeLeftText.text = ((int)timeLeft).ToString();
+
         if (start_new_game) {
             targetValueNum = random.Next(10, MAXLIM);
             GetValues();
@@ -113,14 +128,22 @@ public class MathControl : MonoBehaviour
 
         clicksNum++;
 
+        Debug.Log(clicksNum);
+
         if (clicksNum == 1) {
             clickedValue1 = Int32.Parse(button.GetComponentInChildren<Text>().text);
         } else if (clicksNum == 2) {
             clickedValue2 = Int32.Parse(button.GetComponentInChildren<Text>().text);
             if (CalcOperation(clickedValue1, clickedValue2) == targetValueNum) {
-                targetValueTxt.text = "0";
+                pts += (int)(timeLeft);
+                PlayerPrefs.SetFloat("pts", pts);
+
+                ptsText.text = pts.ToString();
+                timeLeft = 31.0f;
+                start_new_game = true;
+            } else {
+                start_new_game = false;
             }
-        } else {
             clicksNum = 0;
         }
     }
