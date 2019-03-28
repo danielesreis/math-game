@@ -14,6 +14,9 @@ public class MathControl : MonoBehaviour
     public Button[] buttons = new Button[12];
     public string operation;
     private static int MAXLIM = 100;
+    public Text hit;
+    public Text miss;
+    private int number_of_losses = 0;
 
     public Text targetValueTxt;
     private int targetValueNum;
@@ -23,6 +26,7 @@ public class MathControl : MonoBehaviour
 
     private int clicksNum = 0;
     float timeLeft = 31.0f;
+    float msgTime = 2.0f;
     public Text timeLeftText;
     private float pts;
     public Text ptsText;
@@ -51,13 +55,30 @@ public class MathControl : MonoBehaviour
     void Update()
     {
         timeLeft -= Time.deltaTime;
+        msgTime -= Time.deltaTime;
         if (timeLeft <= 0) {
             timeLeft = 31.0f;
+            timeLeftText.color = Color.white;
             start_new_game = true;
+        } else if (timeLeft <= 10) {
+            timeLeftText.color = Color.red;
+        }
+        if (msgTime <= 0) {
+            msgTime = 2.0f;
+            hit.gameObject.SetActive(false);
+            miss.gameObject.SetActive(false);
         }
         timeLeftText.text = ((int)timeLeft).ToString();
 
+        if (number_of_losses == 3) {
+            number_of_losses = 0;
+            pts = 0;
+            PlayerPrefs.SetFloat("pts", pts);
+            ptsText.text = pts.ToString();
+        }
+
         if (start_new_game) {
+            timeLeftText.color = Color.white;
             targetValueNum = random.Next(10, MAXLIM);
             GetValues();
             start_new_game = false;
@@ -128,13 +149,12 @@ public class MathControl : MonoBehaviour
 
         clicksNum++;
 
-        Debug.Log(clicksNum);
-
         if (clicksNum == 1) {
             clickedValue1 = Int32.Parse(button.GetComponentInChildren<Text>().text);
         } else if (clicksNum == 2) {
             clickedValue2 = Int32.Parse(button.GetComponentInChildren<Text>().text);
             if (CalcOperation(clickedValue1, clickedValue2) == targetValueNum) {
+                hit.gameObject.SetActive(true);
                 pts += (int)(timeLeft);
                 PlayerPrefs.SetFloat("pts", pts);
 
@@ -142,7 +162,9 @@ public class MathControl : MonoBehaviour
                 timeLeft = 31.0f;
                 start_new_game = true;
             } else {
+                miss.gameObject.SetActive(true);
                 start_new_game = false;
+                number_of_losses++;
             }
             clicksNum = 0;
         }
